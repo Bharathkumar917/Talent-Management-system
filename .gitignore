@@ -1,0 +1,128 @@
+# =========================
+# GENERAL
+# =========================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+
+# =========================
+# NODE / FRONTEND
+# =========================
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# PYTHON / BACKEND
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python build
+build/
+dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================
+# DATABASE
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# AWS / CLOUD
+# =========================
+.aws/
+.aws-sam/
+.serverless/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# =========================
+# IDE / EDITOR
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# OS / SYSTEM
+# =========================
+*.bak
+*.orig
+
+# =========================
+# DOCKER (if used)
+# =========================
+docker-compose.override.yml
+
+# =========================
+# MISC
+# =========================
+*.pem
+*.key
+*.crt
+
+# =========================
+# SECRETS (IMPORTANT)
+# =========================
+secrets.json
+credentials.json
+*.env.local
+
+# =========================
+# TEST OUTPUTS
+# =========================
+cypress/videos/
+cypress/screenshots/
+
+# =========================
+# BUILD ARTIFACTS
+# =========================
+*.zip
+*.tar
+*.gz
