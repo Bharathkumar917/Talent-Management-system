@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react';
-import {
-  Box, Card, Typography, Grid, Chip, Skeleton, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Avatar,
-} from '@mui/material';
-import {
-  CheckCircle, Cancel, Warning, LocationOn, Groups, Person, TrendingUp,
-} from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import {
-  ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis,
-  PolarRadiusAxis, Radar, Tooltip,
-} from 'recharts';
+import { PieChart, Users, Star, AlertTriangle, TrendingUp, CheckCircle2, XCircle } from 'lucide-react';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip as RechartsTooltip } from 'recharts';
 import { analyticsAPI } from '../api/client';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table';
+import { Badge } from '../components/ui/Badge';
+
+const CustomRadarTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-xl backdrop-blur-md">
+      <p className="mb-1 text-xs font-semibold text-text-muted uppercase tracking-wider">{label}</p>
+      {payload.map((item, i) => (
+        <p key={i} className="text-sm font-bold" style={{ color: item.color || item.payload.fill }}>
+          {item.name}: {item.value}
+        </p>
+      ))}
+    </div>
+  );
+};
 
 export default function AnalyticsPage() {
   const [insights, setInsights] = useState(null);
@@ -41,10 +49,14 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <Box>
-        <Skeleton variant="rounded" height={60} sx={{ mb: 3, borderRadius: 3 }} />
-        {[1, 2, 3].map(i => <Skeleton key={i} variant="rounded" height={300} sx={{ mb: 3, borderRadius: 3 }} />)}
-      </Box>
+      <div className="space-y-6 animate-pulse">
+        <div className="h-16 w-full rounded-xl bg-surfaceHover" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-80 w-full rounded-xl bg-surfaceHover" />
+          <div className="h-80 w-full rounded-xl bg-surfaceHover" />
+        </div>
+        <div className="h-64 w-full rounded-xl bg-surfaceHover" />
+      </div>
     );
   }
 
@@ -56,220 +68,140 @@ export default function AnalyticsPage() {
   })) || [];
 
   return (
-    <Box>
+    <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>Analytics</Typography>
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
-          Business insights and organizational analysis
-        </Typography>
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary">Analytics</h1>
+        <p className="text-sm text-text-muted mt-1">Business insights and organizational analysis</p>
       </motion.div>
 
-      {/* Team Insights Table */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-        <Card sx={{ mb: 3 }}>
-          <Box sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              <Groups sx={{ mr: 1, verticalAlign: 'middle', color: '#818cf8' }} />
-              Team Composition Overview
-            </Typography>
-          </Box>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Team</TableCell>
-                  <TableCell>Location</TableCell>
-                  <TableCell>Members</TableCell>
-                  <TableCell>Direct</TableCell>
-                  <TableCell>Non-Direct</TableCell>
-                  <TableCell>Leader</TableCell>
-                  <TableCell>Org Leader</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {insights?.insights?.map((t) => (
-                  <TableRow key={t.team_id} sx={{ '&:hover': { backgroundColor: 'rgba(99,102,241,0.04)' } }}>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{t.team_name}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip icon={<LocationOn sx={{ fontSize: 14 }} />} label={t.location} size="small"
-                        sx={{ backgroundColor: 'rgba(99,102,241,0.1)', color: '#818cf8' }} />
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={t.member_count} size="small"
-                        sx={{ backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981', fontWeight: 700 }} />
-                    </TableCell>
-                    <TableCell><Typography variant="body2" sx={{ color: '#10b981' }}>{t.direct_staff_count}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" sx={{ color: '#f59e0b' }}>{t.non_direct_staff_count}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" sx={{ color: '#94a3b8' }}>{t.leader_name || '—'}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" sx={{ color: '#94a3b8' }}>{t.org_leader_name || '—'}</Typography></TableCell>
+      {/* Radar Chart & Staff Ratios */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-5 w-5 text-primary-400" /> Team Size Comparison
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="#2a2a2a" />
+                    <PolarAngleAxis dataKey="team" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#71717a', fontSize: 10 }} />
+                    <Radar name="Total Members" dataKey="members" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} />
+                    <Radar name="Direct" dataKey="direct" stroke="#10b981" fill="#10b981" fillOpacity={0.15} />
+                    <RechartsTooltip content={<CustomRadarTooltip />} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }}>
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-amber-500" /> Non-Direct Staff Ratios
+              </CardTitle>
+              <Badge variant={ratios?.teams_exceeding_threshold > 0 ? 'destructive' : 'success'}>
+                {ratios?.teams_exceeding_threshold || 0} teams &gt; 20%
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border">
+                    <TableHead>Team</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Ratio</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Card>
-      </motion.div>
-
-      <Grid container spacing={3}>
-        {/* Radar Chart */}
-        <Grid item xs={12} md={5}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <Card sx={{ p: 3, height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Team Size Comparison</Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.08)" />
-                  <PolarAngleAxis dataKey="team" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#64748b', fontSize: 10 }} />
-                  <Radar name="Total Members" dataKey="members" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} />
-                  <Radar name="Direct" dataKey="direct" stroke="#10b981" fill="#10b981" fillOpacity={0.15} />
-                  <Tooltip contentStyle={{
-                    backgroundColor: 'rgba(15,23,42,0.95)', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 8, color: '#e2e8f0',
-                  }} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </Card>
-          </motion.div>
-        </Grid>
-
-        {/* Staff Ratios */}
-        <Grid item xs={12} md={7}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }}>
-            <Card sx={{ p: 3, height: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  <TrendingUp sx={{ mr: 1, verticalAlign: 'middle', color: '#f59e0b' }} />
-                  Non-Direct Staff Ratios
-                </Typography>
-                <Chip
-                  label={`${ratios?.teams_exceeding_threshold || 0} teams above 20%`}
-                  size="small"
-                  color={ratios?.teams_exceeding_threshold > 0 ? 'error' : 'success'}
-                />
-              </Box>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Team</TableCell>
-                      <TableCell>Total</TableCell>
-                      <TableCell>Direct</TableCell>
-                      <TableCell>Non-Direct</TableCell>
-                      <TableCell>Ratio</TableCell>
-                      <TableCell>Status</TableCell>
+                </TableHeader>
+                <TableBody>
+                  {ratios?.ratios?.map((r) => (
+                    <TableRow key={r.team_id} className={r.exceeds_threshold ? "bg-red-500/5 hover:bg-red-500/10" : "hover:bg-surfaceHover/50"}>
+                      <TableCell className="font-semibold">{r.team_name}</TableCell>
+                      <TableCell className="text-text-muted">{r.total_members}</TableCell>
+                      <TableCell>
+                        <span className={r.exceeds_threshold ? "text-red-500 font-bold" : "text-emerald-500 font-bold"}>
+                          {r.non_direct_ratio}%
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {r.exceeds_threshold ? (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 tracking-wider uppercase">
+                            <AlertTriangle className="h-3.5 w-3.5" /> Exceeds
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 tracking-wider uppercase">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> OK
+                          </div>
+                        )}
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {ratios?.ratios?.map((r) => (
-                      <TableRow key={r.team_id} sx={{
-                        backgroundColor: r.exceeds_threshold ? 'rgba(239,68,68,0.04)' : 'transparent',
-                        '&:hover': { backgroundColor: r.exceeds_threshold ? 'rgba(239,68,68,0.08)' : 'rgba(99,102,241,0.04)' },
-                      }}>
-                        <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{r.team_name}</Typography></TableCell>
-                        <TableCell>{r.total_members}</TableCell>
-                        <TableCell><span style={{ color: '#10b981' }}>{r.direct_staff}</span></TableCell>
-                        <TableCell><span style={{ color: '#f59e0b' }}>{r.non_direct_staff}</span></TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{
-                            fontWeight: 700,
-                            color: r.exceeds_threshold ? '#ef4444' : '#10b981',
-                          }}>
-                            {r.non_direct_ratio}%
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {r.exceeds_threshold ? (
-                            <Chip icon={<Warning sx={{ fontSize: 14 }} />} label="Exceeds" size="small"
-                              sx={{ backgroundColor: 'rgba(239,68,68,0.15)', color: '#ef4444', fontWeight: 600 }} />
-                          ) : (
-                            <Chip icon={<CheckCircle sx={{ fontSize: 14 }} />} label="OK" size="small"
-                              sx={{ backgroundColor: 'rgba(16,185,129,0.15)', color: '#10b981', fontWeight: 600 }} />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Card>
-          </motion.div>
-        </Grid>
-      </Grid>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
 
       {/* Leadership Analysis */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-        <Card sx={{ mt: 3, p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              <Person sx={{ mr: 1, verticalAlign: 'middle', color: '#8b5cf6' }} />
-              Leadership Analysis
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Chip label={`${leadership?.non_colocated_leaders} non-colocated`} size="small"
-                color={leadership?.non_colocated_leaders > 0 ? 'warning' : 'success'} />
-              <Chip label={`${leadership?.non_direct_staff_leaders} non-direct`} size="small"
-                color={leadership?.non_direct_staff_leaders > 0 ? 'error' : 'success'} />
-              <Chip label={`${leadership?.teams_reporting_to_org_leader} report to org leader`} size="small" color="primary" />
-            </Box>
-          </Box>
-          <TableContainer>
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-primary-400" /> Leadership Analysis
+            </CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={leadership?.non_colocated_leaders > 0 ? 'warning' : 'success'}>
+                {leadership?.non_colocated_leaders} non-colocated
+              </Badge>
+              <Badge variant={leadership?.non_direct_staff_leaders > 0 ? 'destructive' : 'success'}>
+                {leadership?.non_direct_staff_leaders} non-direct leaders
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
             <Table>
-              <TableHead>
+              <TableHeader>
                 <TableRow>
-                  <TableCell>Team</TableCell>
-                  <TableCell>Leader</TableCell>
-                  <TableCell>Location</TableCell>
-                  <TableCell>Co-located</TableCell>
-                  <TableCell>Direct Staff</TableCell>
-                  <TableCell>Reports to Org Leader</TableCell>
+                  <TableHead>Team</TableHead>
+                  <TableHead>Leader</TableHead>
+                  <TableHead>Co-located</TableHead>
+                  <TableHead>Direct Staff</TableHead>
+                  <TableHead>Reports to VP</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {leadership?.insights?.map((l) => (
-                  <TableRow key={l.team_id} sx={{ '&:hover': { backgroundColor: 'rgba(99,102,241,0.04)' } }}>
-                    <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{l.team_name}</Typography></TableCell>
-                    <TableCell><Typography variant="body2" sx={{ color: '#94a3b8' }}>{l.leader_name || '—'}</Typography></TableCell>
+                  <TableRow key={l.team_id}>
+                    <TableCell className="font-semibold">{l.team_name}</TableCell>
+                    <TableCell className="text-text-muted">{l.leader_name || '—'}</TableCell>
                     <TableCell>
-                      <Chip icon={<LocationOn sx={{ fontSize: 12 }} />} label={l.team_location} size="small" variant="outlined"
-                        sx={{ borderColor: 'rgba(255,255,255,0.1)', color: '#94a3b8' }} />
+                      {l.leader_is_colocated ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
                     </TableCell>
                     <TableCell>
-                      {l.leader_is_colocated ? (
-                        <Chip icon={<CheckCircle sx={{ fontSize: 14 }} />} label="Yes" size="small"
-                          sx={{ backgroundColor: 'rgba(16,185,129,0.12)', color: '#10b981' }} />
-                      ) : (
-                        <Chip icon={<Cancel sx={{ fontSize: 14 }} />} label="No" size="small"
-                          sx={{ backgroundColor: 'rgba(239,68,68,0.12)', color: '#ef4444' }} />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {l.leader_is_direct_staff ? (
-                        <Chip icon={<CheckCircle sx={{ fontSize: 14 }} />} label="Yes" size="small"
-                          sx={{ backgroundColor: 'rgba(16,185,129,0.12)', color: '#10b981' }} />
-                      ) : (
-                        <Chip icon={<Cancel sx={{ fontSize: 14 }} />} label="No" size="small"
-                          sx={{ backgroundColor: 'rgba(239,68,68,0.12)', color: '#ef4444' }} />
-                      )}
+                      {l.leader_is_direct_staff ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
                     </TableCell>
                     <TableCell>
                       {l.reports_to_org_leader ? (
-                        <Chip icon={<CheckCircle sx={{ fontSize: 14 }} />} label="Yes" size="small"
-                          sx={{ backgroundColor: 'rgba(99,102,241,0.12)', color: '#818cf8' }} />
+                        <Badge variant="outline" className="bg-primary-500/10 text-primary-400 border-none">Yes</Badge>
                       ) : (
-                        <Chip label="No" size="small" variant="outlined"
-                          sx={{ borderColor: 'rgba(255,255,255,0.1)', color: '#64748b' }} />
+                        <Badge variant="secondary" className="bg-surface text-text-muted">No</Badge>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
+          </CardContent>
         </Card>
       </motion.div>
-    </Box>
+    </div>
   );
 }

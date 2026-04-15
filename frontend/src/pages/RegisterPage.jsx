@@ -1,38 +1,32 @@
 import { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import {
-  Box, Card, TextField, Button, Typography, Alert, CircularProgress,
-  InputAdornment, IconButton, MenuItem,
-} from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock, Person } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { Mail, Lock, Eye, EyeOff, Hexagon, User } from 'lucide-react';
+import { authAPI } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
+import { Input, Label } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer' });
+  const { login } = useAuth();
+  const [form, setForm] = useState({ email: '', password: '', name: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
-
-  const validate = () => {
-    if (!form.name || !form.email || !form.password) return 'All fields are required';
-    if (form.password.length < 8) return 'Password must be at least 8 characters';
-    if (!/\S+@\S+\.\S+/.test(form.email)) return 'Please enter a valid email';
-    return null;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationError = validate();
-    if (validationError) { setError(validationError); return; }
+    if (!form.email || !form.password || !form.name) {
+      setError('Please fill in all fields');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      await register(form);
+      await authAPI.register(form);
+      await login(form.email, form.password);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Registration failed');
@@ -42,86 +36,97 @@ export default function RegisterPage() {
   };
 
   return (
-    <Box sx={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.08) 0%, transparent 50%)',
-      p: 2,
-    }}>
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,_rgba(99,102,241,0.12)_0%,_transparent_50%),_radial-gradient(ellipse_at_70%_80%,_rgba(139,92,246,0.08)_0%,_transparent_50%)]" />
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="w-full max-w-md z-10"
       >
-        <Card sx={{ maxWidth: 440, width: '100%', p: 4, borderRadius: 4 }}>
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Box sx={{
-              width: 56, height: 56, borderRadius: 3, mx: 'auto', mb: 2,
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 800, fontSize: 24, color: '#fff',
-              boxShadow: '0 8px 32px rgba(99,102,241,0.3)',
-            }}>
-              A
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Create Account</Typography>
-            <Typography variant="body2" color="text.secondary">Join the ACME Team Management System</Typography>
-          </Box>
+        <Card className="border-border/50 bg-surface/80 backdrop-blur-xl shadow-2xl">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-400 shadow-glow">
+              <Hexagon className="h-7 w-7 text-white fill-white/20" />
+            </div>
+            <CardTitle className="text-2xl font-bold tracking-tight">Create an Account</CardTitle>
+            <CardDescription className="text-text-muted">Join ACME Team Management System</CardDescription>
+          </CardHeader>
+          
+          <CardContent className="pt-4">
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">
+                {error}
+              </div>
+            )}
 
-          {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-name">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                  <Input
+                    id="reg-name"
+                    placeholder="John Doe"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              id="register-name" fullWidth label="Full Name" value={form.name}
-              onChange={handleChange('name')} sx={{ mb: 2 }}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><Person sx={{ color: '#64748b' }} /></InputAdornment> } }}
-            />
-            <TextField
-              id="register-email" fullWidth label="Email" type="email" value={form.email}
-              onChange={handleChange('email')} sx={{ mb: 2 }}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><Email sx={{ color: '#64748b' }} /></InputAdornment> } }}
-            />
-            <TextField
-              id="register-password" fullWidth label="Password"
-              type={showPassword ? 'text' : 'password'} value={form.password}
-              onChange={handleChange('password')} sx={{ mb: 2 }}
-              helperText="Minimum 8 characters"
-              slotProps={{ input: {
-                startAdornment: <InputAdornment position="start"><Lock sx={{ color: '#64748b' }} /></InputAdornment>,
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              } }}
-            />
-            <TextField
-              id="register-role" fullWidth select label="Role" value={form.role}
-              onChange={handleChange('role')} sx={{ mb: 3 }}
-            >
-              <MenuItem value="viewer">Viewer</MenuItem>
-              <MenuItem value="contributor">Contributor</MenuItem>
-              <MenuItem value="manager">Manager</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-            </TextField>
-            <Button
-              id="register-submit" fullWidth type="submit" variant="contained" size="large"
-              disabled={loading} sx={{ mb: 2, py: 1.5 }}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
-            </Button>
-          </form>
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                  <Input
+                    id="reg-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
 
-          <Typography variant="body2" align="center" color="text.secondary">
-            Already have an account?{' '}
-            <Typography component={RouterLink} to="/login" variant="body2"
-              sx={{ color: '#818cf8', textDecoration: 'none', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}>
-              Sign In
-            </Typography>
-          </Typography>
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                  <Input
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    className="pl-9 pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full py-5 text-sm font-semibold" isLoading={loading}>
+                Sign Up
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center text-sm font-medium text-text-muted">
+              Already have an account?{' '}
+              <RouterLink to="/login" className="text-primary-400 text-sm font-semibold hover:text-primary-300 hover:underline">
+                Sign In
+              </RouterLink>
+            </div>
+          </CardContent>
         </Card>
       </motion.div>
-    </Box>
+    </div>
   );
 }

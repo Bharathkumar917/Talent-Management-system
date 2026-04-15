@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
-import {
-  Box, Card, Typography, TextField, Button, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, Dialog, DialogTitle,
-  DialogContent, DialogActions, MenuItem, Skeleton, IconButton, Tooltip,
-  InputAdornment, Avatar,
-} from '@mui/material';
-import { Add, Search, Edit, Delete, EmojiEvents, CalendarMonth } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { Trophy, CalendarDays, Plus, Edit2, Trash2 } from 'lucide-react';
 import { achievementsAPI, teamsAPI } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import { Card, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input, Label } from '../components/ui/Input';
+import { Badge } from '../components/ui/Badge';
+import { Modal } from '../components/ui/Modal';
 
 export default function AchievementsPage() {
   const { isContributor, isManager } = useAuth();
@@ -16,6 +15,7 @@ export default function AchievementsPage() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [teamFilter, setTeamFilter] = useState('');
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [form, setForm] = useState({ team_id: '', month: '', description: '', metrics: '{}' });
@@ -61,7 +61,8 @@ export default function AchievementsPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e?.preventDefault();
     if (!form.team_id || !form.month || !form.description) {
       setError('All fields are required');
       return;
@@ -112,162 +113,188 @@ export default function AchievementsPage() {
   };
 
   return (
-    <Box>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 800 }}>Achievements</Typography>
-            <Typography variant="body2" sx={{ color: '#64748b' }}>Track monthly team accomplishments and KPIs</Typography>
-          </Box>
-          {isContributor && (
-            <Button id="create-achievement-btn" variant="contained" startIcon={<Add />} onClick={openCreate}>
-              Add Achievement
-            </Button>
-          )}
-        </Box>
+    <div className="space-y-6">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Achievements</h1>
+          <p className="text-sm text-text-muted mt-1">Track monthly team accomplishments and KPIs</p>
+        </div>
+        {isContributor && (
+          <Button onClick={openCreate} className="w-full sm:w-auto">
+            <Plus className="mr-2 h-4 w-4" /> Add Achievement
+          </Button>
+        )}
       </motion.div>
 
       {/* Filter */}
-      <Card sx={{ p: 2, mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <TextField
-          id="achievement-team-filter" size="small" select label="Filter by Team"
-          value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}
-          sx={{ minWidth: 200 }}
-        >
-          <MenuItem value="">All Teams</MenuItem>
-          {teams.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
-        </TextField>
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative w-full sm:w-64 flex">
+            <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+            <select
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+              className="flex h-10 w-full appearance-none rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            >
+              <option value="">All Teams</option>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Achievements List */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
         {loading ? (
-          [...Array(4)].map((_, i) => (
-            <Skeleton key={i} variant="rounded" height={100} sx={{ mb: 2, borderRadius: 3 }} />
-          ))
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-32 w-full animate-pulse rounded-xl bg-surfaceHover" />
+            ))}
+          </div>
         ) : achievements.length === 0 ? (
-          <Card sx={{ p: 6, textAlign: 'center' }}>
-            <EmojiEvents sx={{ fontSize: 48, color: '#64748b', mb: 1 }} />
-            <Typography color="text.secondary">No achievements found</Typography>
+          <Card className="flex flex-col items-center justify-center py-20 text-center">
+            <Trophy className="mb-4 h-12 w-12 text-text-muted" />
+            <h3 className="text-lg font-semibold text-text-primary">No achievements yet</h3>
+            <p className="text-sm text-text-muted">Get started by creating your first team achievement.</p>
           </Card>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {achievements.map((a, i) => (
-              <motion.div
-                key={a.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Card sx={{
-                  p: 0, overflow: 'hidden', position: 'relative',
-                  '&::before': {
-                    content: '""', position: 'absolute', top: 0, left: 0, bottom: 0, width: 4,
-                    background: getTeamColor(a.team_name),
-                  },
-                }}>
-                  <Box sx={{ p: 3, pl: 4 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <Chip
-                          label={a.team_name}
-                          size="small"
-                          sx={{
-                            backgroundColor: `${getTeamColor(a.team_name)}15`,
-                            color: getTeamColor(a.team_name),
-                            fontWeight: 600,
-                          }}
-                        />
-                        <Chip
-                          icon={<CalendarMonth sx={{ fontSize: 14 }} />}
-                          label={new Date(a.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                          size="small"
-                          variant="outlined"
-                          sx={{ borderColor: 'rgba(255,255,255,0.1)', color: '#94a3b8' }}
-                        />
-                      </Box>
-                      <Box>
-                        {isContributor && (
-                          <Tooltip title="Edit">
-                            <IconButton size="small" onClick={() => openEdit(a)}>
-                              <Edit fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {isManager && (
-                          <Tooltip title="Delete">
-                            <IconButton size="small" color="error" onClick={() => handleDelete(a.id)}>
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Box>
-                    </Box>
-                    <Typography variant="body1" sx={{ mb: 1.5, color: '#e2e8f0' }}>
-                      {a.description}
-                    </Typography>
-                    {a.metrics && Object.keys(a.metrics).length > 0 && (
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {Object.entries(a.metrics).map(([key, val]) => (
-                          <Chip
-                            key={key}
-                            label={`${key.replace(/_/g, ' ')}: ${typeof val === 'number' ? val.toLocaleString() : val}`}
-                            size="small"
-                            sx={{
-                              backgroundColor: 'rgba(99,102,241,0.08)',
-                              color: '#a78bfa',
-                              fontSize: '0.7rem',
-                              textTransform: 'capitalize',
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-                </Card>
-              </motion.div>
-            ))}
-          </Box>
+          <div className="grid gap-4">
+            {achievements.map((a, i) => {
+              const bgColor = getTeamColor(a.team_name);
+              return (
+                <motion.div
+                  key={a.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <Card className="relative overflow-hidden group">
+                    <div className="absolute left-0 top-0 h-full w-1" style={{ backgroundColor: bgColor }} />
+                    <CardContent className="p-5 pl-7">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge 
+                              variant="outline" 
+                              className="border-none font-bold"
+                              style={{ backgroundColor: `${bgColor}15`, color: bgColor }}
+                            >
+                              {a.team_name}
+                            </Badge>
+                            <Badge variant="secondary" className="font-medium bg-transparent border-border text-text-secondary">
+                              <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+                              {new Date(a.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </Badge>
+                          </div>
+                          
+                          <p className="text-text-primary leading-relaxed">{a.description}</p>
+                          
+                          {a.metrics && Object.keys(a.metrics).length > 0 && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {Object.entries(a.metrics).map(([key, val]) => (
+                                <Badge key={key} variant="outline" className="bg-surfaceHover/50 text-text-secondary border-border capitalize px-2 py-1">
+                                  <span className="font-semibold text-text-primary mr-1">{key.replace(/_/g, ' ')}:</span> 
+                                  {typeof val === 'number' ? val.toLocaleString() : val}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2 shrink-0">
+                          {isContributor && (
+                            <button 
+                              onClick={() => openEdit(a)}
+                              className="rounded-md p-2 text-text-muted hover:bg-surfaceHover hover:text-text-primary transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          )}
+                          {isManager && (
+                            <button 
+                              onClick={() => handleDelete(a.id)}
+                              className="rounded-md p-2 text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
         )}
       </motion.div>
 
-      {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          {editItem ? 'Edit Achievement' : 'New Achievement'}
-        </DialogTitle>
-        <DialogContent>
-          {error && <Typography color="error" sx={{ mb: 2, fontSize: '0.875rem' }}>{error}</Typography>}
-          <TextField
-            id="ach-team" fullWidth select label="Team" value={form.team_id}
-            onChange={(e) => setForm({ ...form, team_id: e.target.value })}
-            sx={{ mt: 1, mb: 2 }} disabled={!!editItem}
-          >
-            {teams.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
-          </TextField>
-          <TextField
-            id="ach-month" fullWidth label="Month" type="date" value={form.month}
-            onChange={(e) => setForm({ ...form, month: e.target.value })}
-            sx={{ mb: 2 }} slotProps={{ inputLabel: { shrink: true } }}
-          />
-          <TextField
-            id="ach-description" fullWidth label="Description" multiline rows={3}
-            value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            id="ach-metrics" fullWidth label="Metrics (JSON)" multiline rows={3}
-            value={form.metrics} onChange={(e) => setForm({ ...form, metrics: e.target.value })}
-            helperText='e.g. {"revenue": 50000, "deals_closed": 12}'
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : editItem ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      {/* Dialog */}
+      <Modal 
+        isOpen={dialogOpen} 
+        onClose={() => setDialogOpen(false)} 
+        title={editItem ? 'Edit Achievement' : 'New Achievement'}
+      >
+        <form onSubmit={handleSave} className="space-y-4">
+          {error && <div className="rounded-md border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div>}
+          
+          <div className="space-y-1.5">
+            <Label htmlFor="ach-team">Team</Label>
+            <select
+              id="ach-team"
+              value={form.team_id}
+              onChange={(e) => setForm({ ...form, team_id: e.target.value })}
+              disabled={!!editItem}
+              className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="" disabled>Select a team</option>
+              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ach-month">Month</Label>
+            <Input 
+              id="ach-month" 
+              type="date"
+              value={form.month} 
+              onChange={(e) => setForm({ ...form, month: e.target.value })} 
+              required
+            />
+          </div>
+          
+          <div className="space-y-1.5">
+            <Label htmlFor="ach-description">Description</Label>
+            <textarea
+              id="ach-description"
+              rows={3}
+              className="flex min-h-[80px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ach-metrics">Metrics (JSON)</Label>
+            <textarea
+              id="ach-metrics"
+              rows={3}
+              className="flex min-h-[80px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              value={form.metrics}
+              onChange={(e) => setForm({ ...form, metrics: e.target.value })}
+              placeholder='e.g. {"revenue": 50000}'
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+            <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button type="submit" isLoading={saving}>{editItem ? 'Update' : 'Create'}</Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
   );
 }

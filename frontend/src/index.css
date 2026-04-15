@@ -1,96 +1,29 @@
-/* ACME Team Management System — Global Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #0a0e1a;
-  color: #e2e8f0;
-  min-height: 100vh;
-}
-
-#root {
-  min-height: 100vh;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
-}
-
-::selection {
-  background: rgba(99, 102, 241, 0.3);
-  color: #fff;
-}
-
-/* Glassmorphism utility */
-.glass {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Gradient text utility */
-.gradient-text {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Animation keyframes */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+@layer base {
+  body {
+    @apply bg-background text-text-primary antialiased font-sans selection:bg-primary-500/30 selection:text-primary-100;
+    /* Optional: Subtle repeating grid background typical of Linear */
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  /* Custom scrollbar to look sleek */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full hover:bg-surfaceHover;
   }
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+@layer components {
+  /* Common glass effect utility */
+  .glass-panel {
+    @apply bg-surface/80 backdrop-blur-md border border-border shadow-surface rounded-xl;
   }
-  50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-fade-in {
-  animation: fadeInUp 0.5s ease-out forwards;
 }

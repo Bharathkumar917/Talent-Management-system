@@ -1,6 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './theme/theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
@@ -11,16 +9,16 @@ import TeamDetailPage from './pages/TeamDetailPage';
 import AchievementsPage from './pages/AchievementsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AdminPage from './pages/AdminPage';
-import { Box, CircularProgress } from '@mui/material';
+import { Loader2 } from 'lucide-react';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { isAuthenticated, loading, isAdmin } = useAuth();
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <CircularProgress sx={{ color: '#6366f1' }} />
-      </Box>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      </div>
     );
   }
 
@@ -56,13 +54,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

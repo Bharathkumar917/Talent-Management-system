@@ -1,52 +1,40 @@
 import { useState, useEffect } from 'react';
-import {
-  Box, Grid, Card, CardContent, Typography, Skeleton, Chip, Avatar, LinearProgress,
-} from '@mui/material';
-import {
-  Groups, Person, EmojiEvents, LocationOn, TrendingUp, Assessment,
-} from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { Users, User, Trophy, MapPin, TrendingUp, BarChart } from 'lucide-react';
 import {
-  PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, AreaChart, Area,
+  PieChart, Pie, Cell, ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip as RechartsTooltip, Legend
 } from 'recharts';
 import { analyticsAPI } from '../api/client';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
-function StatCard({ icon, label, value, color, delay = 0 }) {
+function StatCard({ icon: Icon, label, value, color, delay = 0 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
+      className="relative overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-surface"
     >
-      <Card sx={{
-        position: 'relative', overflow: 'hidden',
-        '&::before': {
-          content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-          background: `linear-gradient(90deg, ${color}, transparent)`,
-        },
-      }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <Box>
-              <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, mb: 1 }}>
-                {label}
-              </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 800, lineHeight: 1 }}>
-                {value}
-              </Typography>
-            </Box>
-            <Avatar sx={{
-              width: 48, height: 48, backgroundColor: `${color}15`,
-              color: color,
-            }}>
-              {icon}
-            </Avatar>
-          </Box>
-        </CardContent>
-      </Card>
+      <div 
+        className="absolute left-0 top-0 h-1 w-full"
+        style={{ background: `linear-gradient(90deg, ${color}, transparent)` }}
+      />
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="mb-1 text-sm font-medium text-text-muted">{label}</p>
+          <h3 className="text-3xl font-extrabold tracking-tight text-text-primary">{value}</h3>
+        </div>
+        <div 
+          className="flex h-12 w-12 items-center justify-center rounded-xl"
+          style={{ backgroundColor: `${color}15`, color }}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -54,17 +42,14 @@ function StatCard({ icon, label, value, color, delay = 0 }) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <Box sx={{
-      p: 1.5, borderRadius: 2, backgroundColor: 'rgba(15, 23, 42, 0.95)',
-      border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)',
-    }}>
-      <Typography variant="caption" sx={{ color: '#94a3b8' }}>{label}</Typography>
+    <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-xl backdrop-blur-md">
+      <p className="mb-1 text-xs font-semibold text-text-muted uppercase tracking-wider">{label}</p>
       {payload.map((item, i) => (
-        <Typography key={i} variant="body2" sx={{ color: item.color, fontWeight: 600 }}>
+        <p key={i} className="text-sm font-bold" style={{ color: item.color || item.payload.fill }}>
           {item.name}: {item.value}
-        </Typography>
+        </p>
       ))}
-    </Box>
+    </div>
   );
 };
 
@@ -96,17 +81,15 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <Box>
-        <Grid container spacing={3}>
-          {[1, 2, 3, 4].map(i => (
-            <Grid item xs={12} sm={6} md={3} key={i}>
-              <Skeleton variant="rounded" height={120} sx={{ borderRadius: 3 }} />
-            </Grid>
-          ))}
-          <Grid item xs={12} md={8}><Skeleton variant="rounded" height={350} sx={{ borderRadius: 3 }} /></Grid>
-          <Grid item xs={12} md={4}><Skeleton variant="rounded" height={350} sx={{ borderRadius: 3 }} /></Grid>
-        </Grid>
-      </Box>
+      <div className="space-y-6 animate-pulse">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-xl bg-surfaceHover" />)}
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="h-[350px] rounded-xl bg-surfaceHover lg:col-span-2" />
+          <div className="h-[350px] rounded-xl bg-surfaceHover" />
+        </div>
+      </div>
     );
   }
 
@@ -119,221 +102,139 @@ export default function DashboardPage() {
   })) || [];
 
   return (
-    <Box>
-      {/* Header */}
+    <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
-          Dashboard
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
-          ACME Inc. organization overview and key metrics
-        </Typography>
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary">Dashboard</h1>
+        <p className="text-sm text-text-muted mt-1">ACME Inc. organization overview and key metrics</p>
       </motion.div>
 
-      {/* KPI Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard icon={<Groups />} label="Total Teams" value={stats?.total_teams || 0} color="#6366f1" delay={0.1} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard icon={<Person />} label="Active Users" value={stats?.total_users || 0} color="#10b981" delay={0.15} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard icon={<EmojiEvents />} label="Achievements" value={stats?.total_achievements || 0} color="#f59e0b" delay={0.2} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard icon={<LocationOn />} label="Locations" value={stats?.active_locations || 0} color="#8b5cf6" delay={0.25} />
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={Users} label="Total Teams" value={stats?.total_teams || 0} color="#6366f1" delay={0.1} />
+        <StatCard icon={User} label="Active Users" value={stats?.total_users || 0} color="#10b981" delay={0.15} />
+        <StatCard icon={Trophy} label="Achievements" value={stats?.total_achievements || 0} color="#f59e0b" delay={0.2} />
+        <StatCard icon={MapPin} label="Locations" value={stats?.active_locations || 0} color="#8b5cf6" delay={0.25} />
+      </div>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Staff Ratio Bar Chart */}
-        <Grid item xs={12} md={8}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-            <Card sx={{ p: 3, height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                Staff Composition by Team
-              </Typography>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={ratioData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8' }} />
-                  <Bar dataKey="direct" name="Direct Staff" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="nonDirect" name="Non-Direct" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </motion.div>
-        </Grid>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="lg:col-span-2">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Staff Composition by Team</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart data={ratioData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fill: '#71717a', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: '#71717a', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: '#1c1c1c' }} />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                    <Bar dataKey="direct" name="Direct Staff" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Bar dataKey="nonDirect" name="Non-Direct" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Teams by Location Pie */}
-        <Grid item xs={12} md={4}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35 }}>
-            <Card sx={{ p: 3, height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                Teams by Location
-              </Typography>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={locationData} cx="50%" cy="50%"
-                    innerRadius={55} outerRadius={85}
-                    dataKey="value" paddingAngle={3}
-                    stroke="none"
-                  >
-                    {locationData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1, justifyContent: 'center' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35 }}>
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Teams by Location</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <div className="h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={locationData} cx="50%" cy="50%"
+                      innerRadius={60} outerRadius={85}
+                      dataKey="value" paddingAngle={2}
+                      stroke="none"
+                    >
+                      {locationData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <RechartsTooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {locationData.map((item, i) => (
-                  <Chip
-                    key={item.name}
-                    label={`${item.name}: ${item.value}`}
-                    size="small"
-                    sx={{
-                      backgroundColor: `${COLORS[i % COLORS.length]}20`,
-                      color: COLORS[i % COLORS.length],
-                      fontSize: '0.7rem', fontWeight: 600,
-                    }}
-                  />
+                  <Badge 
+                    key={item.name} 
+                    variant="outline" 
+                    className="border-transparent font-medium"
+                    style={{ backgroundColor: `${COLORS[i % COLORS.length]}15`, color: COLORS[i % COLORS.length] }}
+                  >
+                    {item.name}: {item.value}
+                  </Badge>
                 ))}
-              </Box>
-            </Card>
-          </motion.div>
-        </Grid>
-      </Grid>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Leadership Insights */}
-        <Grid item xs={12} md={6}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
-            <Card sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                <Assessment sx={{ mr: 1, verticalAlign: 'middle', color: '#818cf8' }} />
-                Leadership Insights
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#ef4444' }}>
-                      {leadership?.non_colocated_leaders || 0}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-                      Non-Colocated Leaders
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#f59e0b' }}>
-                      {leadership?.non_direct_staff_leaders || 0}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-                      Non-Direct Staff Leaders
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#6366f1' }}>
-                      {leadership?.teams_reporting_to_org_leader || 0}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-                      Report to Org Leader
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: '#10b981' }}>
-                      {ratios?.teams_exceeding_threshold || 0}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-                      Teams &gt;20% Non-Direct
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Card>
-          </motion.div>
-        </Grid>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center gap-2">
+              <BarChart className="h-5 w-5 text-primary-400" />
+              <CardTitle>Leadership Insights</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                  <span className="text-3xl font-bold text-red-500">{leadership?.non_colocated_leaders || 0}</span>
+                  <span className="text-xs font-medium text-text-muted mt-1 uppercase tracking-wider">Non-Colocated</span>
+                </div>
+                <div className="flex flex-col rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                  <span className="text-3xl font-bold text-amber-500">{leadership?.non_direct_staff_leaders || 0}</span>
+                  <span className="text-xs font-medium text-text-muted mt-1 uppercase tracking-wider">Non-Direct Leaders</span>
+                </div>
+                <div className="flex flex-col rounded-xl border border-primary-500/20 bg-primary-500/5 p-4">
+                  <span className="text-3xl font-bold text-primary-500">{leadership?.teams_reporting_to_org_leader || 0}</span>
+                  <span className="text-xs font-medium text-text-muted mt-1 uppercase tracking-wider">Report to VP</span>
+                </div>
+                <div className="flex flex-col rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                  <span className="text-3xl font-bold text-emerald-500">{ratios?.teams_exceeding_threshold || 0}</span>
+                  <span className="text-xs font-medium text-text-muted mt-1 uppercase tracking-wider">&gt;20% Non-Direct</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Recent Achievements */}
-        <Grid item xs={12} md={6}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.45 }}>
-            <Card sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                <TrendingUp sx={{ mr: 1, verticalAlign: 'middle', color: '#10b981' }} />
-                Recent Achievements
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.45 }}>
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <CardTitle>Recent Achievements</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
                 {stats?.recent_achievements?.length ? stats.recent_achievements.map((a, i) => (
-                  <Box key={i} sx={{
-                    p: 2, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    transition: 'all 0.2s', '&:hover': { backgroundColor: 'rgba(255,255,255,0.05)' },
-                  }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                      <Chip label={a.team_name} size="small" sx={{ backgroundColor: 'rgba(99,102,241,0.15)', color: '#818cf8', fontSize: '0.7rem' }} />
-                      <Typography variant="caption" sx={{ color: '#64748b' }}>{a.month}</Typography>
-                    </Box>
-                    <Typography variant="body2" sx={{ color: '#cbd5e1' }}>{a.description}</Typography>
-                  </Box>
+                  <div key={i} className="group flex flex-col rounded-lg border border-border bg-surfaceHover/50 p-3 transition-colors hover:bg-surfaceHover">
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <Badge className="bg-primary-500/10 text-primary-400 hover:bg-primary-500/20">{a.team_name}</Badge>
+                      <span className="text-xs text-text-muted">{a.month}</span>
+                    </div>
+                    <p className="text-sm font-medium text-text-primary leading-relaxed">{a.description}</p>
+                  </div>
                 )) : (
-                  <Typography variant="body2" color="text.secondary">No achievements yet</Typography>
+                  <p className="text-sm text-text-muted">No achievements yet.</p>
                 )}
-              </Box>
-            </Card>
-          </motion.div>
-        </Grid>
-
-        {/* Staff Ratio Overview */}
-        <Grid item xs={12}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }}>
-            <Card sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                Non-Direct Staff Ratio by Team
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {ratios?.ratios?.map((r) => (
-                  <Box key={r.team_id}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{r.team_name}</Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="body2" sx={{ color: r.exceeds_threshold ? '#ef4444' : '#10b981', fontWeight: 600 }}>
-                          {r.non_direct_ratio}%
-                        </Typography>
-                        {r.exceeds_threshold && (
-                          <Chip label="⚠ >20%" size="small" sx={{ height: 20, fontSize: '0.65rem', backgroundColor: 'rgba(239,68,68,0.15)', color: '#ef4444' }} />
-                        )}
-                      </Box>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={Math.min(r.non_direct_ratio, 100)}
-                      sx={{
-                        height: 8, borderRadius: 4,
-                        backgroundColor: 'rgba(255,255,255,0.06)',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 4,
-                          backgroundColor: r.exceeds_threshold ? '#ef4444' : '#10b981',
-                        },
-                      }}
-                    />
-                  </Box>
-                ))}
-              </Box>
-            </Card>
-          </motion.div>
-        </Grid>
-      </Grid>
-    </Box>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </div>
   );
 }

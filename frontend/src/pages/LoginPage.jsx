@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import {
-  Box, Card, TextField, Button, Typography, Alert, CircularProgress, InputAdornment, IconButton,
-} from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { Mail, Lock, Eye, EyeOff, Hexagon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
+import { Input, Label } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -32,113 +32,91 @@ export default function LoginPage() {
   };
 
   return (
-    <Box sx={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.08) 0%, transparent 50%)',
-      p: 2,
-    }}>
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,_rgba(99,102,241,0.12)_0%,_transparent_50%),_radial-gradient(ellipse_at_70%_80%,_rgba(139,92,246,0.08)_0%,_transparent_50%)]" />
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="w-full max-w-md z-10"
       >
-        <Card sx={{ maxWidth: 440, width: '100%', p: 4, borderRadius: 4 }}>
-          {/* Logo */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Box sx={{
-              width: 56, height: 56, borderRadius: 3, mx: 'auto', mb: 2,
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 800, fontSize: 24, color: '#fff',
-              boxShadow: '0 8px 32px rgba(99,102,241,0.3)',
-            }}>
-              A
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-              Welcome Back
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Sign in to ACME Team Management System
-            </Typography>
-          </Box>
+        <Card className="border-border/50 bg-surface/80 backdrop-blur-xl shadow-2xl">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary-600 to-primary-400 shadow-glow">
+              <Hexagon className="h-7 w-7 text-white fill-white/20" />
+            </div>
+            <CardTitle className="text-2xl font-bold tracking-tight">Welcome Back</CardTitle>
+            <CardDescription className="text-text-muted">Sign in to ACME Team Management System</CardDescription>
+          </CardHeader>
+          
+          <CardContent className="pt-4">
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">
+                {error}
+              </div>
+            )}
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>
-          )}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="login-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              id="login-email"
-              fullWidth
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
-              slotProps={{ input: {
-                startAdornment: <InputAdornment position="start"><Email sx={{ color: '#64748b' }} /></InputAdornment>,
-              } }}
-            />
-            <TextField
-              id="login-password"
-              fullWidth
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 3 }}
-              slotProps={{ input: {
-                startAdornment: <InputAdornment position="start"><Lock sx={{ color: '#64748b' }} /></InputAdornment>,
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              } }}
-            />
-            <Button
-              id="login-submit"
-              fullWidth
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={loading}
-              sx={{ mb: 2, py: 1.5 }}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
-            </Button>
-          </form>
+              <div className="space-y-1.5">
+                <Label htmlFor="login-password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                  <Input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-9 pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
 
-          <Typography variant="body2" align="center" color="text.secondary">
-            Don't have an account?{' '}
-            <Typography
-              component={RouterLink}
-              to="/register"
-              variant="body2"
-              sx={{ color: '#818cf8', textDecoration: 'none', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}
-            >
-              Sign Up
-            </Typography>
-          </Typography>
+              <Button type="submit" className="w-full py-5 text-sm font-semibold" isLoading={loading}>
+                Sign In
+              </Button>
+            </form>
 
-          {/* Demo credentials hint */}
-          <Box sx={{
-            mt: 3, p: 2, borderRadius: 2,
-            backgroundColor: 'rgba(99,102,241,0.08)',
-            border: '1px solid rgba(99,102,241,0.15)',
-          }}>
-            <Typography variant="caption" sx={{ color: '#818cf8', fontWeight: 600 }}>
-              Demo Credentials
-            </Typography>
-            <Typography variant="caption" display="block" sx={{ color: '#94a3b8', mt: 0.5 }}>
-              Email: sarah.chen@acme.com<br />
-              Password: Password123!
-            </Typography>
-          </Box>
+            <div className="mt-6 text-center text-sm font-medium text-text-muted">
+              Don't have an account?{' '}
+              <RouterLink to="/register" className="text-primary-400 text-sm font-semibold hover:text-primary-300 hover:underline">
+                Sign Up
+              </RouterLink>
+            </div>
+
+            <div className="mt-8 rounded-xl border border-primary-500/10 bg-primary-500/5 p-4 text-center">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary-400">Demo Credentials</p>
+              <p className="text-sm font-medium text-text-secondary">
+                sarah.chen@acme.com <br/> Password123!
+              </p>
+            </div>
+          </CardContent>
         </Card>
       </motion.div>
-    </Box>
+    </div>
   );
 }

@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
-import {
-  Box, Card, Typography, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Chip, IconButton, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, MenuItem, Button, Skeleton,
-  Tooltip, InputAdornment, Avatar, Alert,
-} from '@mui/material';
-import { Search, Edit, Block, CheckCircle, Person, Shield } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { Search, Shield, CheckCircle2, XCircle, Edit2, Play, Square, Settings } from 'lucide-react';
 import { usersAPI } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
-
-const roleColors = {
-  admin: { bg: 'rgba(239,68,68,0.12)', color: '#ef4444' },
-  manager: { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
-  contributor: { bg: 'rgba(59,130,246,0.12)', color: '#3b82f6' },
-  viewer: { bg: 'rgba(148,163,184,0.12)', color: '#94a3b8' },
-};
+import { Card, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input, Label } from '../components/ui/Input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table';
+import { Badge } from '../components/ui/Badge';
+import { Modal } from '../components/ui/Modal';
+import { Avatar } from '../components/ui/Avatar';
 
 export default function AdminPage() {
   const { user: currentUser } = useAuth();
@@ -23,6 +17,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  
   const [editDialog, setEditDialog] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', role: '' });
@@ -44,7 +39,12 @@ export default function AdminPage() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, [search, roleFilter]);
+  useEffect(() => { 
+    const delayDebounceFn = setTimeout(() => {
+      fetchUsers();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, roleFilter]);
 
   const openEdit = (u) => {
     setEditUser(u);
@@ -53,7 +53,8 @@ export default function AdminPage() {
     setEditDialog(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e?.preventDefault();
     if (!editForm.name) { setError('Name is required'); return; }
     setSaving(true);
     try {
@@ -77,164 +78,180 @@ export default function AdminPage() {
     }
   };
 
+  const roleStyles = {
+    admin: "bg-red-500/10 text-red-500",
+    manager: "bg-amber-500/10 text-amber-500",
+    contributor: "bg-primary-500/10 text-primary-500",
+    viewer: "bg-text-muted/10 text-text-secondary",
+  };
+
   return (
-    <Box>
+    <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>
-            <Shield sx={{ mr: 1, verticalAlign: 'middle', color: '#ef4444' }} />
-            Admin Panel
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>Manage users, roles, and system access</Typography>
-        </Box>
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center gap-2">
+          <Shield className="h-6 w-6 text-red-500" /> Admin Panel
+        </h1>
+        <p className="text-sm text-text-muted mt-1">Manage users, roles, and system access constraints.</p>
       </motion.div>
 
       {/* Filters */}
-      <Card sx={{ p: 2, mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <TextField
-          id="admin-search" size="small" placeholder="Search users..." value={search}
-          onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1, minWidth: 200 }}
-          slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search sx={{ color: '#64748b' }} /></InputAdornment> } }}
-        />
-        <TextField
-          id="admin-role-filter" size="small" select label="Role" value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)} sx={{ minWidth: 140 }}
-        >
-          <MenuItem value="">All Roles</MenuItem>
-          <MenuItem value="admin">Admin</MenuItem>
-          <MenuItem value="manager">Manager</MenuItem>
-          <MenuItem value="contributor">Contributor</MenuItem>
-          <MenuItem value="viewer">Viewer</MenuItem>
-        </TextField>
+      <Card>
+        <CardContent className="flex flex-col sm:flex-row gap-4 p-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+            <Input 
+              placeholder="Search users..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="relative w-full sm:w-48">
+            <Settings className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="flex h-10 w-full appearance-none rounded-md border border-border bg-background pl-9 pr-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            >
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="manager">Manager</option>
+              <option value="contributor">Contributor</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Users Table */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-        <Card>
-          <TableContainer>
-            <Table>
-              <TableHead>
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[1, 2, 3, 4, 5, 6].map(j => (
+                      <TableCell key={j}><div className="h-5 w-full animate-pulse rounded bg-surfaceHover" /></TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell>User</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Joined</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell colSpan={6} className="h-32 text-center text-text-muted">
+                    No users found.
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  [...Array(5)].map((_, i) => (
-                    <TableRow key={i}>
-                      {[1, 2, 3, 4, 5, 6].map(j => <TableCell key={j}><Skeleton /></TableCell>)}
-                    </TableRow>
-                  ))
-                ) : users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                      <Typography color="text.secondary">No users found</Typography>
+              ) : (
+                users.map((u) => (
+                  <TableRow key={u.id} className={!u.is_active ? "opacity-50 grayscale" : ""}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar 
+                          fallback={u.name.charAt(0)}
+                          className={`font-bold border-none ${u.role === 'admin' ? 'bg-red-500/20 text-red-500' : 'bg-primary-500/20 text-primary-500'}`}
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-text-primary">
+                            {u.name} {u.id === currentUser?.id && <span className="text-primary-400 text-xs ml-1">(You)</span>}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-text-muted text-sm">{u.email}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={`border-none capitalize ${roleStyles[u.role]}`}>
+                        {u.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        {u.is_active ? (
+                          <><CheckCircle2 className="h-4 w-4 text-emerald-500" /> <span className="text-emerald-500 font-medium text-sm">Active</span></>
+                        ) : (
+                          <><XCircle className="h-4 w-4 text-red-500" /> <span className="text-red-500 font-medium text-sm">Inactive</span></>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-text-muted text-sm">{new Date(u.created_at).toLocaleDateString()}</span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => openEdit(u)}
+                          className="rounded-md p-1.5 text-text-muted hover:bg-primary-500/10 hover:text-primary-500 transition-colors"
+                          title="Edit Role"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        {u.id !== currentUser?.id && u.is_active && (
+                          <button 
+                            onClick={() => handleDeactivate(u.id)}
+                            className="rounded-md p-1.5 text-text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                            title="Deactivate"
+                          >
+                            <Square className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  users.map((u) => (
-                    <TableRow key={u.id} sx={{
-                      '&:hover': { backgroundColor: 'rgba(99,102,241,0.04)' },
-                      opacity: u.is_active ? 1 : 0.5,
-                    }}>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{
-                            width: 36, height: 36,
-                            background: `linear-gradient(135deg, ${roleColors[u.role]?.color || '#6366f1'}, ${roleColors[u.role]?.color || '#8b5cf6'}88)`,
-                            fontSize: '0.8rem', fontWeight: 700,
-                          }}>
-                            {u.name.charAt(0)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{u.name}</Typography>
-                            {u.id === currentUser?.id && (
-                              <Typography variant="caption" sx={{ color: '#818cf8' }}>(You)</Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell><Typography variant="body2" sx={{ color: '#94a3b8' }}>{u.email}</Typography></TableCell>
-                      <TableCell>
-                        <Chip
-                          label={u.role}
-                          size="small"
-                          sx={{
-                            backgroundColor: roleColors[u.role]?.bg,
-                            color: roleColors[u.role]?.color,
-                            fontWeight: 600, textTransform: 'capitalize',
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {u.is_active ? (
-                          <Chip icon={<CheckCircle sx={{ fontSize: 14 }} />} label="Active" size="small"
-                            sx={{ backgroundColor: 'rgba(16,185,129,0.12)', color: '#10b981' }} />
-                        ) : (
-                          <Chip icon={<Block sx={{ fontSize: 14 }} />} label="Inactive" size="small"
-                            sx={{ backgroundColor: 'rgba(239,68,68,0.12)', color: '#ef4444' }} />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: '#64748b' }}>
-                          {new Date(u.created_at).toLocaleDateString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Tooltip title="Edit Role">
-                          <IconButton size="small" onClick={() => openEdit(u)}>
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        {u.id !== currentUser?.id && u.is_active && (
-                          <Tooltip title="Deactivate">
-                            <IconButton size="small" color="error" onClick={() => handleDeactivate(u.id)}>
-                              <Block fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </Card>
       </motion.div>
 
-      {/* Edit User Dialog */}
-      <Dialog open={editDialog} onClose={() => setEditDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Edit User</DialogTitle>
-        <DialogContent>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          <TextField
-            id="edit-user-name" fullWidth label="Name" value={editForm.name}
-            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <TextField
-            id="edit-user-role" fullWidth select label="Role" value={editForm.role}
-            onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-          >
-            <MenuItem value="admin">Admin</MenuItem>
-            <MenuItem value="manager">Manager</MenuItem>
-            <MenuItem value="contributor">Contributor</MenuItem>
-            <MenuItem value="viewer">Viewer</MenuItem>
-          </TextField>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setEditDialog(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Update'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      {/* Edit Dialog */}
+      <Modal isOpen={editDialog} onClose={() => setEditDialog(false)} title="Edit User">
+        <form onSubmit={handleSave} className="space-y-4">
+          {error && <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div>}
+          
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-user-name">Full Name</Label>
+            <Input 
+              id="edit-user-name" 
+              value={editForm.name} 
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} 
+              required
+            />
+          </div>
+          
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-user-role">Role</Label>
+            <select
+              id="edit-user-role"
+              value={editForm.role}
+              onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+              className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            >
+              <option value="admin">Admin</option>
+              <option value="manager">Manager</option>
+              <option value="contributor">Contributor</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+            <Button type="button" variant="ghost" onClick={() => setEditDialog(false)}>Cancel</Button>
+            <Button type="submit" isLoading={saving}>Update User</Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
   );
 }
