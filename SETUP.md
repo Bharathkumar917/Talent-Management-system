@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.10-3.13 recommended (`3.14` currently breaks parts of the backend dependency stack)
 - Node.js 18+
 - npm 9+
 - (Optional) Docker for PostgreSQL
@@ -33,13 +33,13 @@ DEBUG=true
 
 ```bash
 # Creates tables and seeds with realistic ACME data
-python3 seed.py
+python seed.py
 ```
 
 ### 4. Start the backend server
 
 ```bash
-python3 -m uvicorn app.main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 The API is now available at `http://localhost:8000`.
@@ -92,9 +92,9 @@ DATABASE_URL=postgresql://tms_user:password@localhost:5432/team_management
 
 ```bash
 cd backend
-python3 -m pytest tests/ -v                    # All tests
-python3 -m pytest tests/ --cov=app --cov-report=term-missing  # With coverage
-python3 -m pytest tests/test_analytics.py -v   # Just analytics tests
+python -m pytest tests/ -v                    # All tests
+python -m pytest tests/ --cov=app --cov-report=term-missing  # With coverage
+python -m pytest tests/test_analytics.py -v   # Just analytics tests
 ```
 
 ## Troubleshooting
@@ -105,3 +105,5 @@ python3 -m pytest tests/test_analytics.py -v   # Just analytics tests
 | Database errors | Delete `team_management.db` and re-run `seed.py` |
 | CORS errors | Check `CORS_ORIGINS` in backend config |
 | Module not found | Ensure you're in the correct directory when running commands |
+| `DEBUG` validation error | Set `DEBUG` to `true` or `false` (values like `release` now map to `false`) |
+| `psycopg2-binary` install error on Python 3.14 | Use Python 3.10-3.13 for now, or skip PostgreSQL locally and use the default SQLite setup |

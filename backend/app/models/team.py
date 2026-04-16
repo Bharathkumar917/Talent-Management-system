@@ -1,6 +1,7 @@
 """Team model."""
 import uuid
 from datetime import datetime
+
 from sqlalchemy import String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
@@ -14,10 +15,10 @@ class Team(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     location: Mapped[str] = mapped_column(String(255), nullable=False)
-    leader_id: Mapped[uuid.UUID | None] = mapped_column(
+    leader_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    org_leader_id: Mapped[uuid.UUID | None] = mapped_column(
+    org_leader_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

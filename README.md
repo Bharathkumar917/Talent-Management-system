@@ -48,8 +48,8 @@ The system computes these critical metrics:
 # 1. Backend
 cd backend
 pip install -r requirements.txt
-python3 seed.py          # Create database + seed data
-python3 -m uvicorn app.main:app --reload --port 8000
+python seed.py           # Create database + seed data
+python -m uvicorn app.main:app --reload --port 8000
 
 # 2. Frontend  
 cd frontend
@@ -92,8 +92,8 @@ team-management-system/
 
 ```bash
 cd backend
-python3 -m pytest tests/ -v     # Run all 57 tests
-python3 -m pytest tests/ --cov=app --cov-report=term-missing  # With coverage
+python -m pytest tests/ -v     # Run all 57 tests
+python -m pytest tests/ --cov=app --cov-report=term-missing  # With coverage
 ```
 
 ## 📄 Documentation
